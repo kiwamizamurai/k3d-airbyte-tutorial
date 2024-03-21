@@ -1,0 +1,130 @@
+---
+# Source: airbyte/templates/env-configmap.yaml
+# default to empty dict if airbyteYml is undefined
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airbyte-airbyte-env
+  namespace: airbyte
+  labels:
+    app.kubernetes.io/name: airbyte
+    app.kubernetes.io/instance: airbyte
+    app.kubernetes.io/version: "0.53.1"
+data:
+  AIRBYTE_VERSION: 0.53.1
+  AIRBYTE_EDITION: "community"
+  API_URL: /api/v1/
+  CONFIG_API_HOST: http://airbyte-airbyte-server-svc:8001 # temporary solution for oss kube deploys for airbyte api server until that server is wrapped into the config server
+  CONFIG_ROOT: /configs
+  CONFIGS_DATABASE_MINIMUM_FLYWAY_MIGRATION_VERSION: "0.35.15.001"
+  DATA_DOCKER_MOUNT: airbyte_data
+  DATABASE_DB: db-airbyte
+  DATABASE_HOST: airbyte-db-svc # todo: database information into secrets
+  DATABASE_PORT: "5432"
+  DATABASE_URL: "jdbc:postgresql://airbyte-db-svc:5432/db-airbyte"
+  KEYCLOAK_DATABASE_URL: "jdbc:postgresql://airbyte-db-svc:5432/db-airbyte?currentSchema=keycloak"
+  DB_DOCKER_MOUNT: airbyte_db
+  GOOGLE_APPLICATION_CREDENTIALS: "/secrets/gcs-log-creds/gcp.json"
+  INTERNAL_API_HOST: airbyte-airbyte-server-svc:8001
+  WORKLOAD_API_HOST: http://localhost # placeholder value
+  KEYCLOAK_INTERNAL_HOST: localhost # just a placeholder so that nginx template is valid - shouldn't be used when edition isn't "pro"
+  AIRBYTE_API_HOST: airbyte-airbyte-api-server-svc:80
+  JOB_MAIN_CONTAINER_CPU_LIMIT: ""
+  JOB_MAIN_CONTAINER_CPU_REQUEST: ""
+  JOB_MAIN_CONTAINER_MEMORY_LIMIT: ""
+  JOB_MAIN_CONTAINER_MEMORY_REQUEST: ""
+  JOBS_DATABASE_MINIMUM_FLYWAY_MIGRATION_VERSION: "0.29.15.001"
+  LOCAL_ROOT: /tmp/airbyte_local
+  LOG4J_CONFIGURATION_FILE: "log4j2-minio.xml"
+  MICROMETER_METRICS_ENABLED: "false"
+  MICROMETER_METRICS_STATSD_FLAVOR: "datadog"
+  RUN_DATABASE_MIGRATION_ON_STARTUP: "true"
+  SEGMENT_WRITE_KEY: 7UDdp5K55CyiGgsauOr2pNNujGvmhaeu
+  # Storage start
+  STORAGE_TYPE: "minio"
+  STORAGE_BUCKET_LOG: "airbyte-storage"
+  STORAGE_BUCKET_STATE: "airbyte-storage"
+  STORAGE_BUCKET_WORKLOAD_OUTPUT: "airbyte-storage"
+  AWS_DEFAULT_REGION: ""
+  MINIO_ENDPOINT: "http://airbyte-minio-svc:9000"
+  S3_PATH_STYLE_ACCESS: "true"
+  # Storage end
+  STATSD_HOST: "localhost"
+  STATSD_PORT: "8125"
+  TEMPORAL_HOST: airbyte-temporal:7233
+  TEMPORAL_WORKER_PORTS: 9001,9002,9003,9004,9005,9006,9007,9008,9009,9010,9011,9012,9013,9014,9015,9016,9017,9018,9019,9020,9021,9022,9023,9024,9025,9026,9027,9028,9029,9030,9031,9032,9033,9034,9035,9036,9037,9038,9039,9040
+  TRACKING_STRATEGY: segment
+  WEBAPP_URL: http://airbyte-airbyte-webapp-svc:80
+  WORKER_ENVIRONMENT: kubernetes
+  WORKSPACE_DOCKER_MOUNT: airbyte_workspace
+  WORKSPACE_ROOT: /workspace
+  METRIC_CLIENT: ""
+  OTEL_COLLECTOR_ENDPOINT: ""
+  ACTIVITY_MAX_ATTEMPT: ""
+  ACTIVITY_INITIAL_DELAY_BETWEEN_ATTEMPTS_SECONDS: ""
+  ACTIVITY_MAX_DELAY_BETWEEN_ATTEMPTS_SECONDS: ""
+  WORKFLOW_FAILURE_RESTART_DELAY_SECONDS: ""
+  AUTO_DETECT_SCHEMA: "true"
+  CONTAINER_ORCHESTRATOR_IMAGE: ""
+  LAUNCHER_MICRONAUT_ENVIRONMENTS: "control-plane,oss"
+  WORKERS_MICRONAUT_ENVIRONMENTS: "control-plane"
+  CRON_MICRONAUT_ENVIRONMENTS: "control-plane"
+  SHOULD_RUN_NOTIFY_WORKFLOWS: "true"
+  MAX_NOTIFY_WORKERS: "5"
+  KUBERNETES_CLIENT_MAX_IDLE_CONNECTIONS: ""
+  WORKLOAD_LAUNCHER_PARALLELISM: "10"
+---
+# Source: airbyte/charts/temporal/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airbyte-temporal-dynamicconfig
+  namespace: airbyte
+  labels:
+    app.kubernetes.io/name: temporal
+    app.kubernetes.io/instance: airbyte
+    app.kubernetes.io/version: "0.53.1"
+data:
+  "development.yaml": |
+    # when modifying, remember to update the docker-compose version of this file in temporal/dynamicconfig/development.yaml
+    frontend.enableClientVersionCheck:
+      - value: true
+        constraints: {}
+    history.persistenceMaxQPS:
+      - value: 3000
+        constraints: {}
+    frontend.persistenceMaxQPS:
+      - value: 3000
+        constraints: {}
+    frontend.historyMgrNumConns:
+      - value: 30
+        constraints: {}
+    frontend.throttledLogRPS:
+      - value: 20
+        constraints: {}
+    history.historyMgrNumConns:
+      - value: 50
+        constraints: {}
+    system.advancedVisibilityWritingMode:
+      - value: "off"
+        constraints: {}
+    history.defaultActivityRetryPolicy:
+      - value:
+          InitialIntervalInSeconds: 1
+          MaximumIntervalCoefficient: 100.0
+          BackoffCoefficient: 2.0
+          MaximumAttempts: 0
+    history.defaultWorkflowRetryPolicy:
+      - value:
+          InitialIntervalInSeconds: 1
+          MaximumIntervalCoefficient: 100.0
+          BackoffCoefficient: 2.0
+          MaximumAttempts: 0
+    # Limit for responses. This mostly impacts discovery jobs since they have the largest responses.
+    limit.blobSize.error:
+      - value: 15728640 # 15MB
+        constraints: {}
+    limit.blobSize.warn:
+      - value: 10485760 # 10MB
+        constraints: {}
+

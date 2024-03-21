@@ -1,0 +1,62 @@
+# Source: airbyte/charts/airbyte-bootloader/templates/pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: airbyte-airbyte-bootloader
+  namespace: airbyte
+  labels:
+    app.kubernetes.io/name: airbyte-bootloader
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "0.53.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  serviceAccountName: airbyte-admin
+  restartPolicy: Never
+  containers:
+    - name: airbyte-bootloader-container
+      image: airbyte/bootloader:0.53.1
+      imagePullPolicy: "IfNotPresent"
+      env:
+        - name: AIRBYTE_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: airbyte-airbyte-env
+              key: AIRBYTE_VERSION
+        - name: DATABASE_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: airbyte-airbyte-env
+              key: DATABASE_HOST
+        - name: DATABASE_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: airbyte-airbyte-env
+              key: DATABASE_PORT
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: airbyte-airbyte-secrets
+              key: DATABASE_PASSWORD
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: airbyte-airbyte-env
+              key: DATABASE_URL
+        - name: DATABASE_USER
+          valueFrom:
+            secretKeyRef:
+              name: airbyte-airbyte-secrets
+              key: DATABASE_USER
+        - name: RUN_DATABASE_MIGRATION_ON_STARTUP
+          valueFrom:
+            configMapKeyRef:
+              name: airbyte-airbyte-env
+              key: RUN_DATABASE_MIGRATION_ON_STARTUP
+        # Values from secret
+
+        # Values from env
+
+        # Values from extraEnv for more compability(if you want to use external secret source or other stuff)
+      resources:
+        limits: {}
+        requests: {}
